@@ -104,12 +104,14 @@ sudo docker run \
 ip_mongos1=$(sudo docker inspect mongos1 | grep IPAddress | cut -d '"' -f 4)
 echo "IP for mongod router is ${ip_mongos1}"
 
-sleep 10
+sleep 5
 
 mongo "${ip_mongos1}:${default_port}" <<EOF
     sh.addShard("rs1/${ip_rs1_srv1}:${default_port}")
     sh.status()
 EOF
+
+sleep 5
 
 #sudo docker logs rs1_srv1
 #sudo docker logs rs1_srv2
@@ -117,3 +119,53 @@ EOF
 
 #sudo docker logs cfg1
 #sudo docker logs mongos1
+
+echo "********************************************populate data"
+
+mongo "${ip_mongos1}:${default_port}" <<EOF
+
+use test_database
+
+for(var i=0; i< 1000; i++) {
+    db.test_collections.save({
+       nr: i,
+       createdDtm: new Date().getTime(),
+       randomValue: Math.random()
+    });
+}
+
+EOF
+
+echo "********************************************check data data"
+
+mongo "${ip_rs1_srv1}:${default_port}" <<EOF
+
+use test_database
+rs.slaveOk();
+var count = db.test_collections.count()
+print ("Number of documents on ${ip_rs1_srv1}: " + count)
+
+EOF
+
+sleep 5
+
+mongo "${ip_rs1_srv2}:${default_port}" <<EOF
+
+use test_database
+rs.slaveOk();
+var count = db.test_collections.count()
+print ("Number of documents on ${ip_rs1_srv2}: " + count)
+
+EOF
+
+sleep 5
+
+mongo "${ip_rs1_srv3}:${default_port}" <<EOF
+
+use test_database
+rs.slaveOk();
+var count = db.test_collections.count()
+print ("Number of documents on ${ip_rs1_srv3}: " + count)
+
+EOF
+
