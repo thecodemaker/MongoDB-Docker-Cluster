@@ -33,15 +33,10 @@ do
     container_name="rs1_srv${i}"
 
     sudo docker run \
-        -v ${data_dir}:/data/mongodb \
         --name ${container_name} \
-        -P -d dev0/mongodb \
-        --noprealloc \
-        --smallfiles \
-        --replSet rs1 \
-        --dbpath /data/mongodb \
-        --profile=0 \
-        --slowms=-1
+        -v ${data_dir}:/data/mongodb \
+        -P -i -d dev0/mongodb \
+        --replSet rs1 --dbpath /data/mongodb --noprealloc --smallfiles --profile=0 --slowms=-1
 
     IP=$(sudo docker inspect ${container_name} | grep IPAddress | cut -d '"' -f 4)
     echo "IP for replica server ${i} is ${IP}"
@@ -76,16 +71,10 @@ EOF
 echo "********************************************create some config servers"
 
 sudo docker run \
-    -v "`pwd`/mongo-persisted-data/mongo_cfg1":/data/mongodb \
     --name cfg1 \
-    -P -d dev0/mongodb \
-    --noprealloc \
-    --smallfiles \
-    --configsvr \
-    --dbpath /data/mongodb \
-    --profile=0  \
-    --slowms=-1 \
-    --port 27017
+    -v "`pwd`/mongo-persisted-data/mongo_cfg1":/data/mongodb \
+    -P -i -d dev0/mongodb \
+    --configsvr --dbpath /data/mongodb --noprealloc --smallfiles --profile=0  --slowms=-1 --port 27017
 
 ip_cfg1=$(sudo docker inspect cfg1 | grep IPAddress | cut -d '"' -f 4)
 echo "IP for config server is ${ip_cfg1}"
@@ -97,7 +86,7 @@ echo "********************************************create mongod router"
 
 sudo docker run \
     --name mongos1 \
-    -P -d dev0/mongos \
+    -P -i -d dev0/mongos \
     --configdb "${ip_cfg1}:${default_port}" \
     --port 27017
 
