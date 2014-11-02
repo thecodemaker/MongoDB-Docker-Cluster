@@ -1,7 +1,5 @@
 #!/bin/bash
 
-#https://github.com/jacksoncage/mongo-docker/blob/master/docker_mongodb_cluster/start_cluster.sh
-
 # Docker interface ip
 DOCKERIP="172.17.42.1"
 
